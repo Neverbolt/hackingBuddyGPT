@@ -1,7 +1,10 @@
 import abc
 import inspect
-from typing import Union, Type, Dict
+from typing import Union, Type, Dict, Iterable
 
+import openai
+from openai.types.chat import ChatCompletionToolParam
+from openai.types.chat.completion_create_params import Function
 from pydantic import create_model, BaseModel
 
 
@@ -46,7 +49,7 @@ class Capability(abc.ABC):
         the `__call__` method can then be accessed by calling the `execute` method of the model.
         """
         sig = inspect.signature(self.__call__)
-        fields = {param: (param_info.annotation, ...) for param, param_info in sig.parameters.items()}
+        fields = {param: (param_info.annotation, param_info.default if param_info.default is not inspect._empty else ...) for param, param_info in sig.parameters.items()}
         model_type = create_model(self.__class__.__name__, __doc__=self.describe(name), **fields)
 
         def execute(model):
@@ -77,4 +80,26 @@ def capabilities_to_action_model(capabilities: Dict[str, Capability]) -> Type[Ac
         action: Union[tuple([capability.to_model(name) for name, capability in capabilities.items()])]
 
     return Model
+
+
+def capabilities_to_functions(capabilities: Dict[str, Capability]) -> Iterable[openai.types.chat.completion_create_params.Function]:
+    """
+    This function takes a dictionary of capabilities and returns a dictionary of functions, that can be called with the
+    parameters of the respective capabilities.
+    """
+    return [
+        Function(name=name, description=capability.describe(name), parameters=capability.to_model(name).schema())
+        for name, capability in capabilities.items()
+    ]
+
+
+def capabilities_to_tools(capabilities: Dict[str, Capability]) -> Iterable[openai.types.chat.completion_create_params.ChatCompletionToolParam]:
+    """
+    This function takes a dictionary of capabilities and returns a dictionary of functions, that can be called with the
+    parameters of the respective capabilities.
+    """
+    return [
+        ChatCompletionToolParam(type="function", function=Function(name=name, description=capability.describe(name), parameters=capability.to_model(name).schema()))
+        for name, capability in capabilities.items()
+    ]
 
