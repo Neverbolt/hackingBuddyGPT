@@ -44,6 +44,7 @@ class HTTPRequest(Capability):
         body: Optional[str] = None,
         body_is_base64: Optional[bool] = False,
         headers: Optional[Dict[str, str]] = None,
+        hide_binary_response: Optional[bool] = True,
     ) -> str:
 
         if body is not None and body_is_base64:
@@ -65,5 +66,13 @@ class HTTPRequest(Capability):
 
         response_headers = "\r\n".join(f"{k}: {v}" for k, v in resp.headers.items())
 
+        try:
+            response_text = resp.content.decode("utf-8")
+        except UnicodeDecodeError:
+            if hide_binary_response:
+                response_text = f"<binary data hidden, {len(resp.content)} bytes, call with hide_binary_response=False to see the binary data>"
+            else:
+                response_text = resp.text
+
         # turn the response into "plain text format" for responding to the prompt
-        return f"HTTP/1.1 {resp.status_code} {resp.reason}\r\n{response_headers}\r\n\r\n{resp.text}"
+        return f"HTTP/1.1 {resp.status_code} {resp.reason}\r\n{response_headers}\r\n\r\n{response_text}"

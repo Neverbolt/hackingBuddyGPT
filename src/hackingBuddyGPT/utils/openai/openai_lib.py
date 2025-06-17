@@ -1,7 +1,9 @@
 import datetime
+import httpx
 from dataclasses import dataclass
 from typing import Dict, Iterable, Optional, Union
 
+import json
 import instructor
 import openai
 import tiktoken
@@ -32,15 +34,22 @@ class OpenAILib(LLM):
     api_url: str = parameter(desc="URL of the OpenAI API", default="https://api.openai.com/v1")
     api_timeout: int = parameter(desc="Timeout for the API request", default=60)
     api_retries: int = parameter(desc="Number of retries when running into rate-limits", default=3)
+    provider: Optional[str] = parameter(desc="OpenRouter provider, only useful if using OpenRouter, otherwise this might make the requests fail", default=None)
+    proxy: Optional[str] = parameter(desc="Proxy URL for the API calls", default=None)
 
     _client: openai.OpenAI = None
 
     def init(self):
+        http_client = None
+        if self.proxy:
+            http_client = httpx.Client(proxy=self.proxy, verify=False)
+
         self._client = openai.OpenAI(
             api_key=self.api_key,
             base_url=self.api_url,
             timeout=self.api_timeout,
             max_retries=self.api_retries,
+            http_client=http_client,
         )
 
     @property
@@ -68,11 +77,18 @@ class OpenAILib(LLM):
         if capabilities:
             tools = capabilities_to_tools(capabilities)
 
+        if self.provider is not None:
+            extra_body = {"provider": {"only": [self.provider]}}
+        else:
+            extra_body = None
+
         tic = datetime.datetime.now()
+        processed_messages = self.process_messages(prompt)
         response = self._client.chat.completions.create(
             model=self.model,
-            messages=prompt,
+            messages=processed_messages,
             tools=tools,
+            extra_body=extra_body,
         )
         duration = datetime.datetime.now() - tic
         message = response.choices[0].message
@@ -87,6 +103,9 @@ class OpenAILib(LLM):
         )
 
     def stream_response(self, prompt: Iterable[ChatCompletionMessageParam], console: Console, capabilities: Dict[str, Capability] = None, get_individual_updates=False) -> Union[LLMResult, Iterable[Union[ChoiceDelta, LLMResult]]]:
+        #res = self.get_response(prompt, capabilities=capabilities)
+        #return [ChoiceDelta(content=res.answer), res]
+
         generator = self._stream_response(prompt, console, capabilities)
 
         if get_individual_updates:
@@ -150,8 +169,9 @@ class OpenAILib(LLM):
                                     type="function",
                                 )
                             )
+                        else:
+                            message.tool_calls[tool_call.index].function.arguments += tool_call.function.arguments
                         console.print(tool_call.function.arguments, end="")
-                        message.tool_calls[tool_call.index].function.arguments += tool_call.function.arguments
                         outputs += 1
 
                 yield delta
