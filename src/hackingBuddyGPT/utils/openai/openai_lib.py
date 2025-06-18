@@ -34,12 +34,17 @@ class OpenAILib(LLM):
     api_url: str = parameter(desc="URL of the OpenAI API", default="https://api.openai.com/v1")
     api_timeout: int = parameter(desc="Timeout for the API request", default=60)
     api_retries: int = parameter(desc="Number of retries when running into rate-limits", default=3)
-    provider: Optional[str] = parameter(desc="OpenRouter provider, only useful if using OpenRouter, otherwise this might make the requests fail", default=None)
-    proxy: Optional[str] = parameter(desc="Proxy URL for the API calls", default=None)
+    provider: Optional[str] = parameter(desc="OpenRouter provider, only useful if using OpenRouter, otherwise this might make the requests fail", default="")
+    proxy: Optional[str] = parameter(desc="Proxy URL for the API calls", default="")
 
     _client: openai.OpenAI = None
 
     def init(self):
+        if self.proxy == "":
+            self.proxy = None
+        if self.provider == "":
+            self.provider = None
+
         http_client = None
         if self.proxy:
             http_client = httpx.Client(proxy=self.proxy, verify=False)
