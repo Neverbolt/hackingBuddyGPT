@@ -75,11 +75,16 @@ class AutonomousUseCase(UseCase, abc.ABC):
 
         turn = 1
         try:
+            error_message = "maximum turn number reached"
             while turn <= self.max_turns and not self._got_root:
                 with self.log.section(f"round {turn}"):
                     self.log.console.log(f"[yellow]Starting turn {turn} of {self.max_turns}")
 
-                    self._got_root = self.perform_round(turn)
+                    round_result = self.perform_round(turn)
+                    if not isinstance(round_result, bool):
+                        error_message = round_result
+                        break
+                    self._got_root = round_result
 
                     turn += 1
 
@@ -89,7 +94,7 @@ class AutonomousUseCase(UseCase, abc.ABC):
             if self._got_root:
                 self.log.run_was_success()
             else:
-                self.log.run_was_failure("maximum turn number reached")
+                self.log.run_was_failure(error_message)
 
             return self._got_root
         except Exception:

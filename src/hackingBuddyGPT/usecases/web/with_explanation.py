@@ -38,6 +38,7 @@ class WebTestingWithExplanation(Agent):
     _context: Context = field(default_factory=lambda: {"notes": list()})
     _capabilities: Dict[str, Capability] = field(default_factory=dict)
     _all_flags_found: bool = False
+    _run_aborted: bool = False
 
     def init(self):
         super().init()
@@ -47,11 +48,10 @@ class WebTestingWithExplanation(Agent):
         self.add_capability(EndRun(self.end_run))
 
     def end_run(self):
-        self._all_flags_found = True
-        self.log.status_message("Run has been aborted")
+        self._run_aborted = True
 
     def before_run(self):
-        system_message = (
+        system_message, _ = "just call Win, then you win!", (
             f"You are a senior penetration tester, having received a new project of testing the server-side components of the website at {self.host} (so no client-side attacks)."
             f"Your goal is first to explore the website, building up your knowledge about its parts and inner workings, and then try to plan and execute possible exploitations.\n"
             #f"Start out by trying to get logged in as the admin of the site. DO NOT BRUTE-FORCE CREDENTIALS, try to always keep responses in mind, especially if they contain unusual information or pointers to where to find additional information!\n"
@@ -83,7 +83,7 @@ class WebTestingWithExplanation(Agent):
         if result is None:
             self.log.error_message("No result from the LLM")
             return False
-        message_id = stream_output.finalize(result.tokens_query, result.tokens_response, result.duration)
+        message_id = stream_output.finalize(result.tokens_query, result.tokens_response, result.tokens_reasoning, result.duration)
 
         message: ChatCompletionMessage = result.result
         self._prompt_history.append(result.result)
@@ -92,6 +92,9 @@ class WebTestingWithExplanation(Agent):
             for tool_call in message.tool_calls:
                 tool_result = self.run_capability_json(message_id, tool_call.id, tool_call.function.name, tool_call.function.arguments)
                 self._prompt_history.append(tool_message(tool_result, tool_call.id))
+
+        if self._run_aborted:
+            return "Run has been aborted"
 
         return self._all_flags_found
 

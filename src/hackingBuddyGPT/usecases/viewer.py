@@ -288,7 +288,7 @@ class Viewer(UseCase):
                         await websocket.send_text(message.to_json())
 
                     elif message_type == MessageType.MESSAGE:
-                        app.state.db.add_or_update_message(message.run_id, message.id, message.conversation, message.role, message.content, message.tokens_query, message.tokens_response, message.duration)
+                        app.state.db.add_or_update_message(message.run_id, message.id, message.conversation, message.role, message.content, message.tokens_query, message.tokens_response, message.tokens_reasoning, message.duration)
 
                     elif message_type == MessageType.MESSAGE_STREAM_PART:
                         app.state.db.handle_message_update(message.run_id, message.message_id, message.action, message.content)

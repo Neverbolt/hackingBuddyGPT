@@ -24,6 +24,7 @@ class LLMResult:
     duration: datetime.timedelta = datetime.timedelta(0)
     tokens_query: int = 0
     tokens_response: int = 0
+    tokens_reasoning: int = 0
 
 
 class LLM(abc.ABC):

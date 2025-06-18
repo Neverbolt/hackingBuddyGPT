@@ -115,17 +115,17 @@ class LocalLogger:
     def conversation(self, conversation: str, start_section: bool = False) -> "LogConversationContext":
         return LogConversationContext(self, start_section, conversation, self._current_conversation)
 
-    def add_message(self, role: str, content: str, tokens_query: int, tokens_response: int, duration: datetime.timedelta) -> int:
+    def add_message(self, role: str, content: str, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta) -> int:
         message_id = self._last_message_id
         self._last_message_id += 1
 
-        self.log_db.add_message(self.run.id, message_id, self._current_conversation, role, content, tokens_query, tokens_response, duration)
+        self.log_db.add_message(self.run.id, message_id, self._current_conversation, role, content, tokens_query, tokens_response, tokens_reasoning, duration)
         self.console.print(Panel(content, title=(("" if self._current_conversation is None else f"{self._current_conversation} - ") + role)))
 
         return message_id
 
-    def _add_or_update_message(self, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, duration: datetime.timedelta):
-        self.log_db.add_or_update_message(self.run.id, message_id, conversation, role, content, tokens_query, tokens_response, duration)
+    def _add_or_update_message(self, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta):
+        self.log_db.add_or_update_message(self.run.id, message_id, conversation, role, content, tokens_query, tokens_response, tokens_reasoning, duration)
 
     def add_tool_call(self, message_id: int, tool_call_id: str, function_name: str, arguments: str, result_text: str, duration: datetime.timedelta):
         self.console.print(Panel(
@@ -146,14 +146,14 @@ class LocalLogger:
         self.log_db.run_was_failure(self.run.id, reason)
 
     def status_message(self, message: str):
-        self.add_message("status", message, 0, 0, datetime.timedelta(0))
+        self.add_message("status", message, 0, 0, 0, datetime.timedelta(0))
 
     def system_message(self, message: str):
-        self.add_message("system", message, 0, 0, datetime.timedelta(0))
+        self.add_message("system", message, 0, 0, 0, datetime.timedelta(0))
 
     def call_response(self, llm_result: LLMResult) -> int:
         self.system_message(llm_result.prompt)
-        return self.add_message("assistant", llm_result.answer, llm_result.tokens_query, llm_result.tokens_response, llm_result.duration)
+        return self.add_message("assistant", llm_result.answer, llm_result.tokens_query, llm_result.tokens_response, llm_results.tokens_reasoning, llm_result.duration)
 
     def stream_message(self, role: str):
         message_id = self._last_message_id
@@ -225,18 +225,18 @@ class RemoteLogger:
     def conversation(self, conversation: str, start_section: bool = False) -> "LogConversationContext":
         return LogConversationContext(self, start_section, conversation, self._current_conversation)
 
-    def add_message(self, role: str, content: str, tokens_query: int, tokens_response: int, duration: datetime.timedelta) -> int:
+    def add_message(self, role: str, content: str, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta) -> int:
         message_id = self._last_message_id
         self._last_message_id += 1
 
-        msg = Message(self.run.id, message_id, version=1, conversation=self._current_conversation, role=role, content=content, duration=duration, tokens_query=tokens_query, tokens_response=tokens_response)
+        msg = Message(self.run.id, message_id, version=1, conversation=self._current_conversation, role=role, content=content, duration=duration, tokens_query=tokens_query, tokens_response=tokens_response, tokens_reasoning=tokens_reasoning)
         self.send(MessageType.MESSAGE, msg)
         self.console.print(Panel(content, title=(("" if self._current_conversation is None else f"{self._current_conversation} - ") + role)))
 
         return message_id
 
-    def _add_or_update_message(self, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, duration: datetime.timedelta):
-        msg = Message(self.run.id, message_id, version=0, conversation=conversation, role=role, content=content, duration=duration, tokens_query=tokens_query, tokens_response=tokens_response)
+    def _add_or_update_message(self, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta):
+        msg = Message(self.run.id, message_id, version=0, conversation=conversation, role=role, content=content, duration=duration, tokens_query=tokens_query, tokens_response=tokens_response, tokens_reasoning=tokens_reasoning)
         self.send(MessageType.MESSAGE, msg)
 
     def add_tool_call(self, message_id: int, tool_call_id: str, function_name: str, arguments: str, result_text: str, duration: datetime.timedelta):
@@ -265,14 +265,14 @@ class RemoteLogger:
         self.run = Run.from_json(self._upstream_websocket.recv())
 
     def status_message(self, message: str):
-        self.add_message("status", message, 0, 0, datetime.timedelta(0))
+        self.add_message("status", message, 0, 0, 0, datetime.timedelta(0))
 
     def system_message(self, message: str):
-        self.add_message("system", message, 0, 0, datetime.timedelta(0))
+        self.add_message("system", message, 0, 0, 0, datetime.timedelta(0))
 
     def call_response(self, llm_result: LLMResult) -> int:
         self.system_message(llm_result.prompt)
-        return self.add_message("assistant", llm_result.answer, llm_result.tokens_query, llm_result.tokens_response, llm_result.duration)
+        return self.add_message("assistant", llm_result.answer, llm_result.tokens_query, llm_result.tokens_response, llm_results.tokens_reasoning, llm_result.duration)
 
     def stream_message(self, role: str):
         message_id = self._last_message_id
@@ -342,19 +342,19 @@ class MessageStreamLogger:
     _completed: bool = False
 
     def __post_init__(self):
-        self.logger._add_or_update_message(self.message_id, self.conversation, self.role, "", 0, 0, datetime.timedelta(0))
+        self.logger._add_or_update_message(self.message_id, self.conversation, self.role, "", 0, 0, 0, datetime.timedelta(0))
 
     def __del__(self):
         if not self._completed:
             print(f"streamed message was not finalized ({self.logger.run.id}, {self.message_id}), please make sure to call finalize() on MessageStreamLogger objects")
-            self.finalize(0, 0, datetime.timedelta(0))
+            self.finalize(0, 0, 0, datetime.timedelta(0))
 
     def append(self, content: str):
         if self._completed:
             raise ValueError("MessageStreamLogger already finalized")
         self.logger.add_message_update(self.message_id, "append", content)
 
-    def finalize(self, tokens_query: int, tokens_response: int, duration: datetime.timedelta, overwrite_finished_message: Optional[str] = None):
+    def finalize(self, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta, overwrite_finished_message: Optional[str] = None):
         self._completed = True
-        self.logger._add_or_update_message(self.message_id, self.conversation, self.role, "", tokens_query, tokens_response, duration)
+        self.logger._add_or_update_message(self.message_id, self.conversation, self.role, "", tokens_query, tokens_response, tokens_reasoning, duration)
         return self.message_id

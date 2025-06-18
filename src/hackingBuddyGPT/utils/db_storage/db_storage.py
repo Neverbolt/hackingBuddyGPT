@@ -50,6 +50,7 @@ class Message:
     duration: datetime.timedelta = field(metadata=timedelta_metadata)
     tokens_query: int
     tokens_response: int
+    tokens_reasoning: int
 
 
 @dataclass_json
@@ -143,6 +144,7 @@ class RawDbStorage:
                 duration REAL,
                 tokens_query INTEGER,
                 tokens_response INTEGER,
+                tokens_reasoning INTEGER,
                 PRIMARY KEY (run_id, id),
                 FOREIGN KEY (run_id) REFERENCES runs (id)
             )
@@ -207,32 +209,32 @@ class RawDbStorage:
         )
         return self.cursor.lastrowid
 
-    def add_message(self, run_id: int, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, duration: datetime.timedelta):
+    def add_message(self, run_id: int, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta):
         self.cursor.execute(
-            "INSERT INTO messages (run_id, conversation, id, role, content, tokens_query, tokens_response, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (run_id, conversation, message_id, role, content, tokens_query, tokens_response, duration.total_seconds())
+            "INSERT INTO messages (run_id, conversation, id, role, content, tokens_query, tokens_response, tokens_reasoning, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (run_id, conversation, message_id, role, content, tokens_query, tokens_response, tokens_reasoning, duration.total_seconds())
         )
 
-    def add_or_update_message(self, run_id: int, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, duration: datetime.timedelta):
+    def add_or_update_message(self, run_id: int, message_id: int, conversation: Optional[str], role: str, content: str, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta):
         self.cursor.execute(
             "SELECT COUNT(*) FROM messages WHERE run_id = ? AND id = ?",
             (run_id, message_id),
         )
         if self.cursor.fetchone()[0] == 0:
             self.cursor.execute(
-                "INSERT INTO messages (run_id, conversation, id, role, content, tokens_query, tokens_response, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (run_id, conversation, message_id, role, content, tokens_query, tokens_response, duration.total_seconds()),
+                "INSERT INTO messages (run_id, conversation, id, role, content, tokens_query, tokens_response, tokens_reasoning, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (run_id, conversation, message_id, role, content, tokens_query, tokens_response, tokens_reasoning, duration.total_seconds()),
             )
         else:
             if len(content) > 0:
                 self.cursor.execute(
-                    "UPDATE messages SET conversation = ?, role = ?, content = ?, tokens_query = ?, tokens_response = ?, duration = ? WHERE run_id = ? AND id = ?",
-                    (conversation, role, content, tokens_query, tokens_response, duration.total_seconds(), run_id, message_id),
+                    "UPDATE messages SET conversation = ?, role = ?, content = ?, tokens_query = ?, tokens_response = ?, tokens_reasoning = ?, duration = ? WHERE run_id = ? AND id = ?",
+                    (conversation, role, content, tokens_query, tokens_response, tokens_reasoning, duration.total_seconds(), run_id, message_id),
                 )
             else:
                 self.cursor.execute(
-                    "UPDATE messages SET conversation = ?, role = ?, tokens_query = ?, tokens_response = ?, duration = ? WHERE run_id = ? AND id = ?",
-                    (conversation, role, tokens_query, tokens_response, duration.total_seconds(), run_id, message_id),
+                    "UPDATE messages SET conversation = ?, role = ?, tokens_query = ?, tokens_response = ?, tokens_reasoning = ?, duration = ? WHERE run_id = ? AND id = ?",
+                    (conversation, role, tokens_query, tokens_response, tokens_reasoning, duration.total_seconds(), run_id, message_id),
                 )
 
     def add_section(self, run_id: int, section_id: int, name: str, from_message: int, to_message: int, duration: datetime.timedelta):
@@ -255,16 +257,16 @@ class RawDbStorage:
             (content, run_id, message_id),
         )
 
-    def finalize_message(self, run_id: int, message_id: int, tokens_query: int, tokens_response: int, duration: datetime.timedelta, overwrite_finished_message: Optional[str] = None):
+    def finalize_message(self, run_id: int, message_id: int, tokens_query: int, tokens_response: int, tokens_reasoning: int, duration: datetime.timedelta, overwrite_finished_message: Optional[str] = None):
         if overwrite_finished_message:
             self.cursor.execute(
-                "UPDATE messages SET content = ?, tokens_query = ?, tokens_response = ?, duration = ? WHERE run_id = ? AND id = ?",
-                (overwrite_finished_message, tokens_query, tokens_response, duration.total_seconds(), run_id, message_id),
+                "UPDATE messages SET content = ?, tokens_query = ?, tokens_response = ?, tokens_reasoning = ?, duration = ? WHERE run_id = ? AND id = ?",
+                (overwrite_finished_message, tokens_query, tokens_response, tokens_reasoning, duration.total_seconds(), run_id, message_id),
             )
         else:
             self.cursor.execute(
-                "UPDATE messages SET tokens_query = ?, tokens_response = ?, duration = ? WHERE run_id = ? AND id = ?",
-                (tokens_query, tokens_response, duration.total_seconds(), run_id, message_id),
+                "UPDATE messages SET tokens_query = ?, tokens_response = ?, tokens_reasoning = ?, duration = ? WHERE run_id = ? AND id = ?",
+                (tokens_query, tokens_response, tokens_reasoning, duration.total_seconds(), run_id, message_id),
             )
 
     def update_run(self, run_id: int, model: str, state: str, tag: str, started_at: datetime.datetime, stopped_at: datetime.datetime, configuration: str):

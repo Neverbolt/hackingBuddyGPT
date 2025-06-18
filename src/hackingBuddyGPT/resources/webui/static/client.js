@@ -1,14 +1,14 @@
 /* jshint esversion: 9, browser: true */
 /* global console */
 
-(function() {
+(function () {
   "use strict";
 
   function debounce(func, wait = 100, immediate = false) {
     let timeout;
     return function () {
       const context = this,
-          args = arguments;
+        args = arguments;
       const later = function () {
         timeout = null;
         if (!immediate) {
@@ -26,12 +26,7 @@
 
   function isScrollAtBottom() {
     const content = document.getElementById("main-body");
-    console.log(
-        "scroll check",
-        content.scrollHeight,
-        content.scrollTop,
-        content.clientHeight,
-    );
+    console.log("scroll check", content.scrollHeight, content.scrollTop, content.clientHeight);
     return content.scrollHeight - content.scrollTop <= content.clientHeight + 30;
   }
 
@@ -55,8 +50,7 @@
   let currentRun = null;
 
   const followNewRunsCheckbox = document.getElementById("follow_new_runs");
-  let followNewRuns =
-      !window.location.hash && localStorage.getItem("followNewRuns") === "true";
+  let followNewRuns = !window.location.hash && localStorage.getItem("followNewRuns") === "true";
   followNewRunsCheckbox.checked = followNewRuns;
 
   followNewRunsCheckbox.addEventListener("change", () => {
@@ -65,16 +59,14 @@
   });
 
   let send = function (type, data) {
-    const message = {type: type, data: data};
+    const message = { type: type, data: data };
     console.log("> sending  ", message);
     ws.send(JSON.stringify(message));
   };
 
   function initWebsocket() {
     console.log("initializing websocket");
-    ws = new WebSocket(
-        `ws${location.protocol === "https:" ? "s" : ""}://${location.host}/client`,
-    );
+    ws = new WebSocket(`ws${location.protocol === "https:" ? "s" : ""}://${location.host}/client`);
 
     let runs = {};
 
@@ -82,7 +74,7 @@
       ws.addEventListener("message", (event) => {
         const message = JSON.parse(event.data);
         console.log("< receiving", message);
-        const {type, data} = message;
+        const { type, data } = message;
 
         const wasAtBottom = isScrollAtBottom();
         switch (type) {
@@ -113,9 +105,7 @@
       function createRunListEntry(runId) {
         const runList = document.getElementById("run-list");
         const template = document.getElementById("run-list-entry-template");
-        const runListEntry = template.content
-            .cloneNode(true)
-            .querySelector(".run-list-entry");
+        const runListEntry = template.content.cloneNode(true).querySelector(".run-list-entry");
         runListEntry.id = `run-list-entry-${runId}`;
         const a = runListEntry.querySelector("a");
         a.href = "#" + runId;
@@ -136,15 +126,9 @@
         li.querySelector(".run-id").textContent = `Run ${run.id}`;
         li.querySelector(".run-model").tExtContent = run.model;
         li.querySelector(".run-tags").textContent = run.tag;
-        li.querySelector(".run-started-at").textContent = run.started_at.slice(
-            0,
-            -3,
-        );
+        li.querySelector(".run-started-at").textContent = run.started_at.slice(0, -10);
         if (run.stopped_at) {
-          li.querySelector(".run-stopped-at").textContent = run.stopped_at.slice(
-              0,
-              -3,
-          );
+          li.querySelector(".run-stopped-at").textContent = run.stopped_at.slice(0, -10);
         }
         li.querySelector(".run-state").textContent = run.state;
 
@@ -157,9 +141,7 @@
       function addSectionDiv(sectionId) {
         const messagesDiv = document.getElementById("messages");
         const template = document.getElementById("section-template");
-        const sectionDiv = template.content
-            .cloneNode(true)
-            .querySelector(".section");
+        const sectionDiv = template.content.cloneNode(true).querySelector(".section");
         sectionDiv.id = `section-${sectionId}`;
         messagesDiv.appendChild(sectionDiv);
         return sectionDiv;
@@ -183,8 +165,7 @@
           sectionDiv.remove();
         }
         sectionDiv = addSectionDiv(section.id);
-        sectionDiv.querySelector(".section-name").textContent =
-            `${section.name} ${section.duration.toFixed(3)}s`;
+        sectionDiv.querySelector(".section-name").textContent = `${section.name} ${section.duration.toFixed(3)}s`;
 
         let columnNumber = 0;
         let columnPosition = 0;
@@ -196,10 +177,7 @@
           let columnFits = true;
           for (let j = 0; j < column.length; j++) {
             const [from_message, to_message] = column[j];
-            if (
-                section.from_message < to_message &&
-                from_message < section.to_message
-            ) {
+            if (section.from_message < to_message && from_message < section.to_message) {
               columnFits = false;
               break;
             }
@@ -216,15 +194,8 @@
         }
         if (!found) {
           sectionColumns.push([[section.from_message, section.to_message]]);
-          document.documentElement.style.setProperty(
-              "--section-column-count",
-              sectionColumns.length,
-          );
-          console.log(
-              "added section column",
-              sectionColumns.length,
-              sectionColumns,
-          );
+          document.documentElement.style.setProperty("--section-column-count", sectionColumns.length);
+          console.log("added section column", sectionColumns.length, sectionColumns);
         }
 
         sectionDiv.style = `grid-column: ${columnNumber}; grid-row: ${section.from_message} / ${section.to_message};`;
@@ -235,16 +206,14 @@
       function addMessageDiv(messageId, role) {
         const messagesDiv = document.getElementById("messages");
         const template = document.getElementById("message-template");
-        const messageDiv = template.content
-            .cloneNode(true)
-            .querySelector(".message");
+        const messageDiv = template.content.cloneNode(true).querySelector(".message");
+
         messageDiv.id = `message-${messageId}`;
         messageDiv.style = `grid-row: ${messageId + 1};`;
         if (role === "system") {
           messageDiv.removeAttribute("open");
         }
-        messageDiv.querySelector(".tool-calls").id =
-            `message-${messageId}-tool-calls`;
+        messageDiv.querySelector(".tool-calls").id = `message-${messageId}-tool-calls`;
         messagesDiv.appendChild(messageDiv);
         return messageDiv;
       }
@@ -258,12 +227,25 @@
           messageDiv.getElementsByTagName("pre")[0].textContent = message.content;
         }
         messageDiv.querySelector(".role").textContent = message.role;
-        messageDiv.querySelector(".duration").textContent =
-            `${message.duration.toFixed(3)} s`;
-        messageDiv.querySelector(".tokens-query").textContent =
-            `${message.tokens_query} qry tokens`;
-        messageDiv.querySelector(".tokens-response").textContent =
-            `${message.tokens_response} rsp tokens`;
+        if (message.duration > 0) {
+          messageDiv.querySelector(".duration").textContent = `${message.duration.toFixed(3)} s`;
+        }
+        console.log(message.tokens_query, typeof message.tokens_query);
+        if (message.tokens_query > 0) {
+          messageDiv.querySelector(".tokens-query").textContent = `${message.tokens_query} qry tokens`;
+        }
+        let tokens_ctr = 0;
+        if (message.tokens_response) {
+          messageDiv.querySelector(".tokens-response").textContent = `${message.tokens_response} rsp tokens`;
+          tokens_ctr++;
+        }
+        if (message.tokens_reasoning) {
+          messageDiv.querySelector(".tokens-reasoning").textContent = `${message.tokens_reasoning} reason tokens`;
+          tokens_ctr++;
+        }
+        if (tokens_ctr == 2) {
+          messageDiv.querySelector(".tokens-separator").textContent = " - ";
+        }
       }
 
       function handleMessageStreamPart(part) {
@@ -275,49 +257,36 @@
       }
 
       function addToolCallDiv(messageId, toolCallId, functionName) {
-        const toolCallsDiv = document.getElementById(
-            `message-${messageId}-tool-calls`,
-        );
+        const toolCallsDiv = document.getElementById(`message-${messageId}-tool-calls`);
         const template = document.getElementById("message-tool-call");
-        const toolCallDiv = template.content
-            .cloneNode(true)
-            .querySelector(".tool-call");
+        const toolCallDiv = template.content.cloneNode(true).querySelector(".tool-call");
+
         toolCallDiv.id = `message-${messageId}-tool-call-${toolCallId}`;
-        toolCallDiv.querySelector(".tool-call-function").textContent =
-            functionName;
+        toolCallDiv.querySelector(".tool-call-function").textContent = functionName;
         toolCallsDiv.appendChild(toolCallDiv);
+
         return toolCallDiv;
       }
 
       function handleToolCall(toolCall) {
-        let toolCallDiv = document.getElementById(
-            `message-${toolCall.message_id}-tool-call-${toolCall.id}`,
-        );
+        let toolCallDiv = document.getElementById(`message-${toolCall.message_id}-tool-call-${toolCall.id}`);
         if (!toolCallDiv) {
           toolCallDiv = addToolCallDiv(
-              toolCall.message_id,
-              toolCall.id,
-              toolCall.function_name,
+            toolCall.message_id,
+            toolCall.id,
+            toolCall.function_name,
           );
         }
-        toolCallDiv.querySelector(".tool-call-state").textContent =
-            toolCall.state;
-        toolCallDiv.querySelector(".tool-call-duration").textContent =
-            `${toolCall.duration.toFixed(3)} s`;
-        toolCallDiv.querySelector(".tool-call-parameters").textContent =
-            toolCall.arguments;
-        toolCallDiv.querySelector(".tool-call-results").textContent =
-            toolCall.result_text;
+        toolCallDiv.querySelector(".tool-call-state").textContent = toolCall.state;
+        toolCallDiv.querySelector(".tool-call-duration").textContent = `${toolCall.duration.toFixed(3)} s`;
+        toolCallDiv.querySelector(".tool-call-parameters").textContent = toolCall.arguments;
+        toolCallDiv.querySelector(".tool-call-results").textContent = toolCall.result_text;
       }
 
       function handleToolCallStreamPart(part) {
-        const messageDiv = document.getElementById(
-            `message-${part.message_id}-tool-calls`,
-        );
+        const messageDiv = document.getElementById(`message-${part.message_id}-tool-calls`);
         if (messageDiv) {
-          let toolCallDiv = messageDiv.querySelector(
-              `.tool-call-${part.tool_call_id}`,
-          );
+          let toolCallDiv = messageDiv.querySelector(`.tool-call-${part.tool_call_id}`);
           if (!toolCallDiv) {
             toolCallDiv = document.createElement("div");
             toolCallDiv.className = `tool-call tool-call-${part.tool_call_id}`;
@@ -336,7 +305,7 @@
         document.getElementById("messages").innerHTML = "";
         sectionColumns = [];
         document.documentElement.style.setProperty("--section-column-count", 0);
-        send("MessageRequest", {follow_run: runId});
+        send("MessageRequest", { follow_run: runId });
         currentRun = runId;
         // set hash to runId via pushState
         window.location.hash = runId;
@@ -346,14 +315,9 @@
         // try to json parse and pretty print the run configuration into `#run-config`
         try {
           const config = JSON.parse(runs[runId].configuration);
-          document.getElementById("run-config").textContent = JSON.stringify(
-              config,
-              null,
-              2,
-          );
+          document.getElementById("run-config").textContent = JSON.stringify(config, null, 2);
         } catch (e) {
-          document.getElementById("run-config").textContent =
-              runs[runId].configuration;
+          document.getElementById("run-config").textContent = runs[runId].configuration;
         }
       });
       if (window.location.hash) {
@@ -361,8 +325,7 @@
       } else {
         // toggle the sidebar if no run is selected
         sidebar.classList.add("active");
-        document.getElementById("main-run-title").textContent =
-            "Please select a run";
+        document.getElementById("main-run-title").textContent = "Please select a run";
       }
 
       ws.addEventListener("close", initWebsocket);

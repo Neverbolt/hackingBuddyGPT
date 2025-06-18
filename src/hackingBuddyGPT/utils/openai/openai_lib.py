@@ -105,6 +105,7 @@ class OpenAILib(LLM):
             duration,
             response.usage.prompt_tokens,
             response.usage.completion_tokens,
+            response.usage.completion_tokens_details.reasoning_tokens if response.usage.completion_tokens_details else 0,
         )
 
     def stream_response(self, prompt: Iterable[ChatCompletionMessageParam], console: Console, capabilities: Dict[str, Capability] = None, get_individual_updates=False) -> Union[LLMResult, Iterable[Union[ChoiceDelta, LLMResult]]]:
@@ -203,6 +204,7 @@ class OpenAILib(LLM):
             toc - tic,
             usage.prompt_tokens,
             usage.completion_tokens,
+            usage.completion_tokens_details.reasoning_tokens if usage.completion_tokens_details else 0
         )
 
     def encode(self, query) -> list[int]:

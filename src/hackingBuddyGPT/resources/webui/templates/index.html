@@ -40,17 +40,13 @@
     </body>
     <template id="run-list-entry-template">
         <li class="run-list-entry">
-            <a>
-                <div class="run-list-info">
-                    <h3 class="run-id"></h3>
-                    <span class="run-model"></span>
-                    <span class="run-tags"></span>
-                    <span class="run-state"></span>
-                </div>
-                <div class="run-list-timing">
-                    <span class="run-started-at"></span>
-                    <span class="run-stopped-at"></span>
-                </div>
+            <a class="run-list-info">
+                <h3 class="run-id"></h3>
+                <span class="run-started-at"></span>
+                <span class="run-stopped-at"></span>
+                <span class="run-model"></span>
+                <span class="run-tags"></span>
+                <span class="run-state"></span>
             </a>
         </li>
     </template>
@@ -71,7 +67,7 @@
                     </div>
                     <div>
                         <span class="duration"></span>
-                        <span class="tokens-response"></span>
+                        <span><span class="tokens-reasoning"></span><span class="tokens-separator"></span><span class="tokens-response"></span></span>
                     </div>
                 </header>
             </summary>
