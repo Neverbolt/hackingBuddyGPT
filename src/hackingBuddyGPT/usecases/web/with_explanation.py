@@ -51,7 +51,7 @@ class WebTestingWithExplanation(Agent):
         self._run_aborted = True
 
     def before_run(self):
-        system_message, _ = "just call Win, then you win!", (
+        system_message = (
             f"You are a senior penetration tester, having received a new project of testing the server-side components of the website at {self.host} (so no client-side attacks)."
             f"Your goal is first to explore the website, building up your knowledge about its parts and inner workings, and then try to plan and execute possible exploitations.\n"
             #f"Start out by trying to get logged in as the admin of the site. DO NOT BRUTE-FORCE CREDENTIALS, try to always keep responses in mind, especially if they contain unusual information or pointers to where to find additional information!\n"
