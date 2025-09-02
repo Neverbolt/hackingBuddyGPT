@@ -243,11 +243,6 @@ details summary::-webkit-details-marker {
     display: flex;
 }
 
-.message .tool-call header {
-    flex-direction: row;
-    justify-content: space-between;
-}
-
 .message .message-header {
     flex-direction: column;
 }
@@ -259,6 +254,11 @@ details summary::-webkit-details-marker {
 
 .message .message-text {
     margin: 1rem;
+}
+
+.message .tool-call header {
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 .message .tool-calls {
@@ -285,6 +285,19 @@ details summary::-webkit-details-marker {
 .message .tool-call-results {
     border-left: 4px solid lightcoral;
     padding: 1rem 0.5rem;
+}
+
+.message .reasoning {
+    display: none;
+    margin: 1rem;
+    maring-bottom: 2rem;
+    border: 2px solid #333;
+    border-radius: 4px;
+    padding: 1rem 0.5rem;
+}
+
+.message .reasoning .reasoning-text {
+    margin-top: 1rem;
 }
 
 /* Responsive behavior */

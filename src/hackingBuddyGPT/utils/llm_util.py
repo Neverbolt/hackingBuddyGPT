@@ -21,6 +21,7 @@ class LLMResult:
     result: typing.Any
     prompt: str
     answer: str
+    reasoning: str
     duration: datetime.timedelta = datetime.timedelta(0)
     tokens_query: int = 0
     tokens_response: int = 0

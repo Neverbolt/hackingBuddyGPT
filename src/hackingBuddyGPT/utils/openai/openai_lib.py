@@ -1,7 +1,7 @@
 import datetime
 import httpx
 from dataclasses import dataclass
-from typing import Dict, Iterable, Optional, Union
+from typing import Dict, Iterable, Optional, Union, TypeAlias
 
 import json
 import instructor
@@ -11,19 +11,26 @@ from dataclasses import dataclass
 from openai.types import CompletionUsage
 from openai.types.chat import (
     ChatCompletionChunk,
-    ChatCompletionMessage,
-    ChatCompletionMessageParam,
+    ChatCompletionMessage as OpenAIChatCompletionMessage,
+    ChatCompletionMessageParam as OpenAIChatCompletionMessageParam,
     ChatCompletionMessageToolCall,
 )
 from openai.types.chat.chat_completion_chunk import ChoiceDelta
 from openai.types.chat.chat_completion_message_tool_call import Function
 from rich.console import Console
+from pydantic import Field
 
 from hackingBuddyGPT.capabilities import Capability
 from hackingBuddyGPT.capabilities.capability import capabilities_to_tools
 from hackingBuddyGPT.utils import LLM, LLMResult, configurable
 from hackingBuddyGPT.utils.configurable import parameter
 
+
+class ChatCompletionMessage(OpenAIChatCompletionMessage):
+    # this mirrors what OpenRouter returns under the hood
+    reasoning: Optional[str] =  None
+
+ChatCompletionMessageParam: TypeAlias = Union[OpenAIChatCompletionMessageParam, ChatCompletionMessage]
 
 @configurable("openai-lib", "OpenAI Library based connection")
 @dataclass
@@ -147,12 +154,22 @@ class OpenAILib(LLM):
                 if delta.role is not None and delta.role != message.role:
                     print(f"WARNING: Got a role change to '{delta.role}' in the stream response")
 
-                if delta.content is not None:
+                if delta.content is not None and len(delta.content) > 0:
                     message.content += delta.content
                     if state != "content":
                         state = "content"
                         console.print("\n\n[bold blue]ASSISTANT:[/bold blue]")
                     console.print(delta.content, end="")
+                    outputs += 1
+
+                if hasattr(delta, 'reasoning') and delta.reasoning is not None and len(delta.reasoning) > 0:
+                    if message.reasoning is None:
+                        message.reasoning = ""
+                    message.reasoning += delta.reasoning
+                    if state != "reasoning":
+                        state = "reasoning"
+                        console.print("\n\n[bold blue]REASONING:[/bold blue]")
+                    console.print(delta.reasoning, end="")
                     outputs += 1
 
                 if delta.tool_calls is not None and len(delta.tool_calls) > 0:
@@ -165,7 +182,14 @@ class OpenAILib(LLM):
                                     f"WARNING: Got a tool call with index {tool_call.index} but expected {len(message.tool_calls)}"
                                 )
                                 return
+                            if tool_call.function.name is None:
+                                print(f"WARNING: Got a tool call with no function name")
+                                continue
+                            if tool_call.function.arguments is None:
+                                print(f"WARNING: Got a tool call with no arguments")
+                                continue
                             console.print(f"\n\n[bold red]TOOL CALL - {tool_call.function.name}:[/bold red]")
+
                             message.tool_calls.append(
                                 ChatCompletionMessageToolCall(
                                     id=tool_call.id,
@@ -201,6 +225,7 @@ class OpenAILib(LLM):
             message,
             str(prompt),
             message.content,
+            message.reasoning,
             toc - tic,
             usage.prompt_tokens,
             usage.completion_tokens,

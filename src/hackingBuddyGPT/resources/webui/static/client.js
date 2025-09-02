@@ -224,7 +224,13 @@
           messageDiv = addMessageDiv(message.id, message.role);
         }
         if (message.content && message.content.length > 0) {
-          messageDiv.getElementsByTagName("pre")[0].textContent = message.content;
+          messageDiv.querySelector(".message-text").textContent = message.content;
+        }
+        if (message.reasoning && message.reasoning.length > 0) {
+          const reasoningDiv = messageDiv.querySelector(".reasoning");
+          reasoningDiv.style.display = "block";
+          const reasoningTextDiv = reasoningDiv.querySelector(".reasoning-text");
+          reasoningTextDiv.textContent = message.reasoning;
         }
         messageDiv.querySelector(".role").textContent = message.role;
         if (message.duration > 0) {
@@ -253,7 +259,13 @@
         if (!messageDiv) {
           messageDiv = addMessageDiv(part.message_id);
         }
-        messageDiv.getElementsByTagName("pre")[0].textContent += part.content;
+        messageDiv.querySelector(".message-text").textContent += part.content;
+        if(part.reasoning && part.reasoning.length > 0) {
+          const reasoningDiv = messageDiv.querySelector(".reasoning");
+          reasoningDiv.style.display = "block";
+          const reasoningTextDiv = reasoningDiv.querySelector(".reasoning-text");
+          reasoningTextDiv.textContent += part.reasoning;
+        }
       }
 
       function addToolCallDiv(messageId, toolCallId, functionName) {
@@ -297,7 +309,6 @@
       }
 
       const selectRun = debounce((runId) => {
-        console.error("selectRun", runId, currentRun);
         if (runId === currentRun) {
           return;
         }
