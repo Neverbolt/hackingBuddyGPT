@@ -15,6 +15,6 @@ class SimpleChatAgent(Agent):
         pass  # TODO: copy over and implement
 
 
-@use_case("Simple Chat")
+# @use_case("Simple Chat")
 class SimpleChatUseCase(AutonomousAgentUseCase[SimpleChatAgent]):
     pass

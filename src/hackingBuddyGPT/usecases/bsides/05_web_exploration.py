@@ -11,13 +11,13 @@ from hackingBuddyGPT.utils.limits import Limits
 class WebExplorationAgent(ChatAgent):
     @override
     async def system_message(self, limits: Limits) -> str:
-        # TODO: copy over
+        pass  # TODO: copy over
 
     @override
     async def before_run(self, limits: Limits):
-        # TODO: copy over and implement
+        pass  # TODO: copy over and implement
 
 
-@use_case("Web Exploration")
+# @use_case("Web Exploration")
 class WebExplorationUseCase(AutonomousAgentUseCase[WebExplorationAgent]):
     pass

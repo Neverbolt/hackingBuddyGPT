@@ -26,6 +26,6 @@ class SimpleToolsAgent(Agent):
         pass  # TODO: copy over and implement
 
 
-@use_case("Simple Tools")
+# @use_case("Simple Tools")
 class SimpleToolsUseCase(AutonomousAgentUseCase[SimpleToolsAgent]):
     pass

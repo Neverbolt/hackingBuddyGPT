@@ -19,6 +19,6 @@ class MultiAgentAgent(ChatAgent):
         pass  # TODO: copy over and implement
 
 
-@use_case("Multi Agent")
+# @use_case("Multi Agent")
 class MultiAgentUseCase(AutonomousAgentUseCase[MultiAgentAgent]):
     pass

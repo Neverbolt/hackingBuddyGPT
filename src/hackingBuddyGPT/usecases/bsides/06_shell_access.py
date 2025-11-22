@@ -18,6 +18,6 @@ class ShellAccessAgent(ChatAgent):
         pass  # TODO: copy over and implement
 
 
-@use_case("Shell Access")
+# @use_case("Shell Access")
 class ShellAccessUseCase(AutonomousAgentUseCase[ShellAccessAgent]):
     pass

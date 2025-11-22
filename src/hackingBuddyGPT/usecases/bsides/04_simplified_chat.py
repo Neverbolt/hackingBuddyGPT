@@ -38,6 +38,6 @@ class SimplifiedChatAgent(ChatAgent):
         pass  # TODO: copy over and implement
 
 
-@use_case("Simplified Chat")
+# @use_case("Simplified Chat")
 class SimplifiedChatUseCase(AutonomousAgentUseCase[SimplifiedChatAgent]):
     pass

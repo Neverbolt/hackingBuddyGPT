@@ -1,4 +1,6 @@
 .env
+.env.old
+*.secret
 venv/
 .venv/
 __pycache__/
