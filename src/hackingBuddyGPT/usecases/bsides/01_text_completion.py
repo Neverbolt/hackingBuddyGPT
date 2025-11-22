@@ -11,19 +11,7 @@ class TextCompletionAgent(Agent):
 
     @override
     async def perform_round(self, limits: Limits):
-        try:
-            query = input("> ")
-        except (KeyboardInterrupt, EOFError):
-            print()
-            limits.complete()
-            return
-
-        result = self.llm.get_response(query)
-        # print(result)
-        print("<", result.result.content)
-
-        limits.register_message(result)
-        limits.register_round()
+        pass  # TODO: implement
 
 
 @use_case("Text Completion")
