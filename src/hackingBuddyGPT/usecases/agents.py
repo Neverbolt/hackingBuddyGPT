@@ -28,6 +28,8 @@ class Agent(ABC):
     _capabilities: dict[str, Capability] = field(default_factory=dict)
     _default_capability: Capability | None = None
 
+    _serial_tool_call_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+
     llm: OpenAIConnection = None
 
     async def init(self):  # noqa: B027
@@ -44,10 +46,12 @@ class Agent(ABC):
     async def perform_round(self, limits: Limits):
         pass
 
-    def add_capability(self, cap: Capability, name: str = None, default: bool = False):
+    def add_capability(self, cap: Capability, name: str | None = None, default: bool = False):
         if name is None:
             name = cap.get_name()
+
         self._capabilities[name] = cap
+
         if default:
             self._default_capability = cap
 
@@ -71,6 +75,9 @@ class Agent(ABC):
             raise ValueError(f"Capability {capability_name} not found")
 
         tic = datetime.datetime.now()
+        run_serially = capability.run_serially
+        if run_serially:
+            await self._serial_tool_call_lock.acquire()
         try:
             result = await capability.to_model().model_validate_json(arguments).execute()
         except Exception as e:
@@ -78,6 +85,9 @@ class Agent(ABC):
 
             traceback.print_exc()
             result = f"EXCEPTION: {e}"
+        finally:
+            if run_serially:
+                self._serial_tool_call_lock.release()
         duration = datetime.datetime.now() - tic
 
         await self.log.add_tool_call(message_id, tool_call_id, capability_name, arguments, result, duration)
@@ -221,6 +231,10 @@ class SubAgentCapability(Capability):
     parent_limits: Limits
     capabilities: dict[str, Capability]
     role_name: str
+
+    @property
+    def run_serially(self):
+        return True
 
     @override
     def describe(self) -> str:

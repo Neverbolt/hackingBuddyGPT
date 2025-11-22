@@ -79,17 +79,18 @@ class OpenAILib(LLM):
         return instructor.from_openai(self.client)
 
     def get_response(self, prompt, *, capabilities: dict[str, Capability] | None = None, **kwargs) -> LLMResult:
-        """# TODO: re-enable compatibility layer
+        # """# TODO: re-enable compatibility layer
         if isinstance(prompt, str) or hasattr(prompt, "render"):
             prompt = {"role": "user", "content": prompt}
 
         if isinstance(prompt, dict):
             prompt = [prompt]
 
+        """
         for i, v in enumerate(prompt):
             if hasattr(v, "content") and hasattr(v["content"], "render"):
                 prompt[i]["content"] = v.render(**kwargs)
-        """
+        # """
 
         tools = None
         if capabilities:
@@ -101,10 +102,10 @@ class OpenAILib(LLM):
             extra_body = None
 
         tic = datetime.datetime.now()
-        processed_messages = self.process_messages(prompt)
+        # processed_messages = self.process_messages(prompt)
         response = self._client.chat.completions.create(
             model=self.model,
-            messages=processed_messages,
+            messages=prompt,
             tools=tools,
             extra_body=extra_body,
         )

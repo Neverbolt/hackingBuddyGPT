@@ -1,15 +1,14 @@
 import abc
 import copy
-from functools import partial, wraps
 import inspect
-from typing import Any, Callable, Dict, Iterable, TypeVar, ParamSpec, Type, Union, Awaitable, override
+from functools import partial, wraps
+from typing import Any, Awaitable, Callable, Dict, Iterable, ParamSpec, Type, TypeVar, Union, override
 
 import openai
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.chat.completion_create_params import Function
 from pydantic import BaseModel, create_model
 from pydantic.json_schema import GenerateJsonSchema, JsonSchemaValue
-
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -48,6 +47,10 @@ class Capability(abc.ABC):
 
     def get_name(self) -> str:
         return type(self).__name__
+
+    @property
+    def run_serially(self) -> bool:
+        return False
 
     @abc.abstractmethod
     async def __call__(self, *args, **kwargs) -> str:
