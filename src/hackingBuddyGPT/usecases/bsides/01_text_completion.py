@@ -11,7 +11,12 @@ class TextCompletionAgent(Agent):
 
     @override
     async def perform_round(self, limits: Limits):
-        pass  # TODO: implement
+        import pprint
+
+        query = input("> ")
+        result = self.llm.get_response(query)
+        print("<", result.result.content)
+        # pprint.pprint(result)
 
 
 @use_case("Text Completion")

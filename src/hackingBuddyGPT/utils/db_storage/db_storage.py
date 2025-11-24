@@ -1,11 +1,11 @@
-from dataclasses import dataclass, field
-from dataclasses_json import config, dataclass_json
 import datetime
 import sqlite3
+from dataclasses import dataclass, field
 from typing import Literal, Optional, Union
 
-from hackingBuddyGPT.utils.configurable import Global, configurable, parameter
+from dataclasses_json import config, dataclass_json
 
+from hackingBuddyGPT.utils.configurable import Global, configurable, parameter
 
 timedelta_metadata = config(
     encoder=lambda td: td.total_seconds(), decoder=lambda seconds: datetime.timedelta(seconds=seconds)
@@ -27,7 +27,7 @@ class Run:
     model: str
     state: str
     tag: str
-    started_at: datetime.datetime = field(metadata=datetime_metadata)
+    started_at: datetime = field(metadata=datetime_metadata)
     stopped_at: Optional[datetime.datetime] = field(metadata=optional_datetime_metadata)
     configuration: str
 
